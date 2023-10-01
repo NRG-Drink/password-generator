@@ -1,32 +1,37 @@
-﻿namespace PasswordCreator.Models;
+﻿namespace PasswordGenerator.Models;
 public class PwInsert
 {
-    public int Position { get; set; }
-    public PwSequence Sequence { get; set; } = new PwSequence();
+    internal int Position { get; private set; }
+    internal PwSequence Sequence { get; private set; } = new PwSequence();
 
     #region Config
+    public PwInsert SetPosition(int position)
+    {
+        Position = position;
+        return this;
+    }
+
+    //public PwInsert SetSequence(Func<PwSequence, PwSequence> seqFunc)
+    //{
+    //    Sequence = seqFunc(new PwSequence());
+    //    return this;
+    //}
+
     public PwInsert AddCharset(Func<PwCharset, PwCharset> charsetFunc)
     {
-        var charset = charsetFunc(new PwCharset());
-        Sequence.Values.Add(charset);
+        Sequence.AddCharset(charsetFunc);
+        return this;
+    }
+
+    public PwInsert AddCharsets(IEnumerable<PwCharset> charsets)
+    {
+        Sequence.AddCharsets(charsets);
         return this;
     }
 
     public PwInsert SetLength(int length)
     {
-        Sequence.SeqLength = length;
-        return this;
-    }
-
-    public PwInsert SetSequence(Func<PwSequence, PwSequence> seqFunc)
-    {
-        Sequence = seqFunc(new PwSequence());
-        return this;
-    }
-
-    public PwInsert SetPosition(int position)
-    {
-        Position = position;
+        Sequence.SetLength(length);
         return this;
     }
     #endregion

@@ -1,14 +1,17 @@
-﻿using PasswordCreator.Models;
+﻿using PasswordGenerator.Models;
+using PasswordGenerator.StringTemplateParser.Models;
 using Sprache;
-using System.Runtime.InteropServices;
 
-namespace PasswordCreator.StringTemplateParser;
+namespace PasswordGenerator.StringTemplateParser;
 public class Parser
 {
     private readonly Parser<IEnumerable<Return>> _parser;
+    private readonly PwCharsetParser _charsetParser;
 
-    public Parser()
+    public Parser(List<string>[]? customCharsets = null)
     {
+        _charsetParser = new PwCharsetParser(customCharsets);
+
         var charsetP = GetCharsetParser();
         var countP = GetCountParser();
 
@@ -18,64 +21,36 @@ public class Parser
 
         _parser =
             from ret in Parse.Ref(() => concatP.Or(insertP).Or(untilP)).AtLeastOnce()
-            select (ret);
+            from end in Parse.LineTerminator
+            select ret;
     }
 
-
-    public PwGenerator AddConfig(PwGenerator pwGenerator, string input)
+    public PwConfig GetConfig(string templateString)
     {
-        /* Needs
-         * Add Sequence (c)
-         * Insert At    [n, c]
-         * Length       {n}
-         * Fill Until   f[n, c]
-         * 
-         * c = charset
-         * 1c = min seq of charset
-         * n = number
-         * f = fill until
-         * 
-         * c = characters
-         * n = numbers
-         * s = special characters
-         * x = custom strings
-         *  x = all custom alphabets
-         *  x^1 = specific custom alphabet
-         */
-
-        var pwConfig = _parser.Parse(input);
-        return GetPwGen(pwGenerator, pwConfig);
+        var pwConfig = _parser.Parse(templateString);
+        return GetPwGen(pwConfig);
     }
 
 
-    #region Init Parser
+    #region Init Parsers
     private Parser<PwFill> GetFillUntilParser(
-        Parser<Charset> charsetParser
+        Parser<PwCharset> charsetParser
         )
         => from seq in Parse.Ref(() =>
-                from start in Parse.String("f[")
-                from minLength in Parse.Digit.AtLeastOnce()
-                from comma in Parse.Char(',')
+                from start in Parse.String("f(")
                 from alphabets in Parse.Ref(() => charsetParser).AtLeastOnce()
-                from end in Parse.Char(']')
+                from comma in Parse.Char(',')
+                from minLength in Parse.Digit.AtLeastOnce()
+                from end in Parse.Char(')')
                 select new PwFill()
-                {
-                    MinLength = ParseNumber(minLength),
-                    Sequence = new PwSequence
-                    {
-                        SeqLength = 0,
-                        Values = alphabets.Select(e => new PwCharset()
-                        {
-                            MinOccurrences = e.MinContaining,
-                            Charset = GetCharsetByKey(e.Key)
-                        }).ToList()
-                    }
-                }
-            )
+                    .SetMinlength(ParseNumber(minLength))
+                    .SetLength(0)
+                    .AddCharsets(alphabets)
+                )
            select seq;
 
     private Parser<PwInsert> GetInsertParser(
-        Parser<Charset> charsetParser,
+        Parser<PwCharset> charsetParser,
         Parser<int> countParser
         )
         => from seq in Parse.Ref(() =>
@@ -83,68 +58,88 @@ public class Parser
                 from insertAt in Parse.Digit.AtLeastOnce()
                 from comma in Parse.Char(',')
                 from alphabets in Parse.Ref(() => charsetParser).AtLeastOnce()
-                from end in Parse.Char(']')
                 from count in countParser.Optional()
+                from end in Parse.Char(']')
                 select new PwInsert()
-                {
-                    Position = ParseNumber(insertAt),
-                    Sequence = new PwSequence
-                    {
-                        SeqLength = count.IsEmpty ? 1 : count.Get(),
-                        Values = alphabets.Select(e => new PwCharset()
-                        {
-                            MinOccurrences = e.MinContaining,
-                            Charset = GetCharsetByKey(e.Key)
-                        }).ToList()
-                    }
-                }
-                
-            )
+                    .SetPosition(ParseNumber(insertAt))
+                        .SetLength(count.IsEmpty ? 1 : count.Get())
+                        .AddCharsets(alphabets)
+                )
            select seq;
 
     private Parser<PwSequence> GetSequenceParser(
-        Parser<Charset> charsetParser,
+        Parser<PwCharset> charsetParser,
         Parser<int> countParser
         )
         => from seq in Parse.Ref(() =>
                 from start in Parse.Char('(')
                 from alphabets in Parse.Ref(() => charsetParser).AtLeastOnce()
-                from end in Parse.Char(')')
                 from count in countParser.Optional()
+                from end in Parse.Char(')')
                 select new PwSequence()
-                {
-                    SeqLength = count.IsEmpty ? 1 : count.Get(),
-                    Values = alphabets.Select(e => new PwCharset()
-                    {
-                        MinOccurrences = e.MinContaining,
-                        Charset = GetCharsetByKey(e.Key)
-                    }).ToList()
-                }
-            )
-            select seq;
+                    .SetLength(count.IsEmpty ? 1 : count.Get())
+                    .AddCharsets(alphabets)
+                )
+           select seq;
 
-    private Parser<Charset> GetCharsetParser()
+    private Parser<PwCharset> GetCharsetParser()
         => from min in Parse.Digit.AtLeastOnce().Optional()
-           from key in Parse.Letter.Once().Text()
-           select new Charset(ParseNumber(min), key);
+           from charset in Parse.Ref(() => GetKeyParser().Or(GetLetterParser()))
+           from roof in Parse.Char('^').Optional()
+           from num in Parse.Digit.AtLeastOnce().Optional()
+           select new PwCharset()
+            .SetMin(ParseNumber(min))
+            .AddCharset(GetCharset(charset, num))
+           ;
+
+    private List<string> GetCharset(Charset charset, IOption<IEnumerable<char>> num)
+        => charset.Key is not null
+            ? _charsetParser.GetCharsetByKey(charset.Key, ParseNumber(num))
+            : [charset.Chars ?? string.Empty];
+
+    private Parser<Charset> GetKeyParser()
+        => from key in Parse.Letter.Once().Text()
+           select new Charset(key, null);
+
+    private Parser<Charset> GetLetterParser()
+        => from start in Parse.Char('\'')
+           from values in Parse.CharExcept('\'').AtLeastOnce().Text()
+           from end in Parse.Char('\'')
+           select new Charset(null, values);
 
     private Parser<int> GetCountParser()
-        => from start in Parse.Char('{')
+        => from comma in Parse.Char(',')
            from value in Parse.Digit.AtLeastOnce()
-           from end in Parse.Char('}')
            select ParseNumber(value);
     #endregion
 
-    private List<string> GetCharsetByKey(string key)
-        => key switch
-        {
-            "a" => new List<string>() { "a", "b", "c" },
-            "s" => new List<string>() { "%", "/", "!", "?" },
-            //"c" => Enumerable.Range(97, 26).Select(e => ((char)e).ToString()).ToList(),
-            "n" => Enumerable.Range(0, 9).Select(e => e.ToString()).ToList(),
-            "z" => new List<string>() { "x", "y", "z" },
-            _ => new List<string>() { "-" }
-        };
+    //private List<string> GetCharsetByKey(string key, int num = 0)
+    //    => key switch
+    //    {
+    //        "s" => new List<string>() { "%", "/", "!", "?" },
+    //        "n" => Enumerable.Range(0, 9).Select(e => e.ToString()).ToList(),
+    //        "c" => Enumerable.Range(97, 26).Select(e => ((char)e).ToString()).ToList(),
+    //        "C" => Enumerable.Range(97, 26).Select(e => ((char)e).ToString().ToUpper()).ToList(),
+    //        "a" => GetCharsetByKey("s").Concat(GetCharsetByKey("n")).Concat(GetCharsetByKey("c")).Concat(GetCharsetByKey("C")).ToList(),
+    //        "x" => GetCustomCharset(num),
+    //        _ => throw new ArgumentException($"No default charset found for '{key}'.")
+    //    };
+
+    //private List<string> GetCustomCharset(int num)
+    //{
+    //    if (_customCharsets is null) throw new ArgumentNullException($"No custom charset defined.");
+    //    if (_customCharsets.Length <= num) throw new IndexOutOfRangeException(
+    //            $"No custom charset with index {num} defined\n" +
+    //            $"Make sure start counting at 0, not 1."
+    //            );
+    //    return _customCharsets[num];
+    //}
+
+    private string? ParseString(IOption<IEnumerable<char>> num)
+    {
+        if (num.IsEmpty) return null;
+        return new string(num.Get().ToArray());
+    }
 
     private int ParseNumber(IOption<IEnumerable<char>> num)
     {
@@ -154,41 +149,17 @@ public class Parser
 
     private int ParseNumber(IEnumerable<char> num)
     {
-        var val = new string(num.ToArray()).ToString() ?? "0";
+        var val = new string(num.ToArray()) ?? "0";
         var number = int.Parse(val);
         return number;
     }
 
-
-    private PwGenerator GetPwGen(PwGenerator gen, IEnumerable<Return> config)
+    private PwConfig GetPwGen(IEnumerable<Return> config)
     {
-        gen.SetConcat(config
-            .Where(e => e.Concat is not null)
-            .Select(e => new PwSequence()
-            { SeqLength = e.Concat!.SeqLength, Values = e.Concat!.Values }
-            )
-            .ToList()
-        );
-        gen.SetInsert(config
-            .Where(e => e.Insert is not null)
-            .Select(e => new PwInsert()
-            { Position = e.Insert!.Position, Sequence = e.Insert.Sequence }
-            )
-            .ToList()
-        );
-        gen.SetFill(config
-            .Where(e => e.Fill is not null)
-            .Select(e => new PwFill()
-            { MinLength = e.Fill!.MinLength, Sequence = e.Fill!.Sequence, }
-            )
-            .ToList()
-        );
+        var concat = config.Where(e => e.Concat is not null).Select(e => e.Concat) as IEnumerable<PwSequence>;
+        var insert = config.Where(e => e.Insert is not null).Select(e => e.Insert) as IEnumerable<PwInsert>;
+        var fill = config.Where(e => e.Fill is not null).Select(e => e.Fill) as IEnumerable<PwFill>;
 
-        return gen;
+        return new PwConfig(concat.ToList(), insert.ToList(), fill.ToList());
     }
 }
-
-
-
-public record Charset(int MinContaining, string Key);
-public record Return(PwSequence? Concat, PwInsert? Insert, PwFill? Fill);

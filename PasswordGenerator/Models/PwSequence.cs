@@ -1,13 +1,18 @@
-﻿using System.Runtime.InteropServices;
-using System.Text;
+﻿using System.Text;
 
-namespace PasswordCreator.Models;
+namespace PasswordGenerator.Models;
 public class PwSequence
 {
-    internal List<PwCharset> Values { get; set; } = new();
-    internal int SeqLength { get; set; } = 0;
+    internal int SequenceLength { get; private set; } = 0;
+    internal List<PwCharset> Values { get; private set; } = new();
 
     #region Config
+    public PwSequence SetLength(int length)
+    {
+        SequenceLength = length;
+        return this;
+    }
+
     public PwSequence AddCharset(Func<PwCharset, PwCharset> charsetFunc)
     {
         var charset = charsetFunc(new PwCharset());
@@ -15,9 +20,9 @@ public class PwSequence
         return this;
     }
 
-    public PwSequence SetLength(int length)
+    public PwSequence AddCharsets(IEnumerable<PwCharset> charsets)
     {
-        SeqLength = length;
+        Values.AddRange(charsets);
         return this;
     }
     #endregion
@@ -33,7 +38,7 @@ public class PwSequence
         var len = words.Sum(e => e.Length);
         var allChar = Values.SelectMany(e => e.Charset).ToList();
         var r = new Random();
-        for (int i = len; i < SeqLength; i++)
+        for (int i = len; i < SequenceLength; i++)
         {
             var n = r.Next(allChar.Count);
             words.Add(allChar[n]);
