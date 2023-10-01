@@ -1,67 +1,32 @@
 ﻿using System.Text;
-using PasswordCreator.Models;
-using PasswordCreator.StringTemplateParser;
+using PasswordGenerator.Models;
 
-namespace PasswordCreator;
+namespace PasswordGenerator;
 public class PwGenerator
 {
-    private readonly List<PwSequence> _concat = new ();
-    private readonly List<PwInsert> _insert = new ();
-    private readonly List<PwFill> _fill = new();
+    private readonly PwConfig _config;
 
-    #region Config
-    internal void SetConcat(List<PwSequence> list) => _concat.AddRange(list);
-    internal void SetInsert(List<PwInsert> list) => _insert.AddRange(list);
-    internal void SetFill(List<PwFill> list) => _fill.AddRange(list);
-
-    public PwGenerator AddConfigFromTemplateString(string templateString)
+    public PwGenerator(PwConfig config)
     {
-        var parser = new Parser();
-        parser.AddConfig(this, templateString);
-        return this;
+        _config = config;
     }
-
-    public PwGenerator Concat(Func<PwSequence, PwSequence> seqFunc)
-    {
-        var seq = seqFunc(new PwSequence());
-        _concat.Add(seq); 
-        return this;
-    }
-
-    public PwGenerator InsertAt(Func<PwInsert, PwInsert> insertFunc)
-    {
-        var insrt = insertFunc(new PwInsert());
-        _insert.Add(insrt);
-        return this;
-    }
-
-    public PwGenerator FillUntil(Func<PwFill, PwFill> fillFunc)
-    {
-        var insrt = fillFunc(new PwFill());
-        _fill.Add(insrt);
-        return this;
-    }
-    #endregion
 
     public string GeneratePassword()
     {
         var sb = new StringBuilder();
 
-        // Get Sequences.
-        foreach (var sequence in _concat)
+        foreach (var sequence in _config.Concat)
         {
             sb.Append(sequence.GetPwSequence());
         }
-        // Insert snippets.
-        foreach (var e in _insert)
+        foreach (var e in _config.Insert)
         {
             sb.Insert(e.Position, e.Sequence.GetPwSequence());
         }
-        // Fill rest.
-        foreach (var e in _fill)
+        foreach (var e in _config.Fill)
         {
             if (e.MinLength < sb.Length) continue;
-            e.Sequence.SeqLength = e.MinLength - sb.Length;
+            e.Sequence.SetLength(e.MinLength - sb.Length);
             sb.Append(e.Sequence.GetPwSequence());
         }
 
