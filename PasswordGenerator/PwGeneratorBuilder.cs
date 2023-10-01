@@ -1,7 +1,5 @@
-﻿using PasswordCreator;
-using PasswordCreator.Models;
-using PasswordCreator.StringTemplateParser;
-using PasswordGenerator.Models;
+﻿using PasswordGenerator.Models;
+using PasswordGenerator.StringTemplateParser;
 
 namespace PasswordGenerator;
 
@@ -9,24 +7,15 @@ public class PwGeneratorBuilder
 {
     private PwConfig _config = new PwConfig(new List<PwSequence>(), new List<PwInsert>(), new List<PwFill>());
 
-    public PwGeneratorBuilder() { }
-
-    public PwGeneratorBuilder(
-        IEnumerable<PwSequence>? concat,
-        IEnumerable<PwInsert>? insert,
-        IEnumerable<PwFill>? fill
-        )
-    {
-        if (concat is not null) _config.Concat.AddRange(concat);
-        if (insert is not null) _config.Insert.AddRange(insert);
-        if (fill is not null) _config.Fill.AddRange(fill);
-    }
-
-    public PwGeneratorBuilder(string templateString) : this(templateString, customCharsets: null) 
+    public PwGeneratorBuilder() 
     { }
 
-    public PwGeneratorBuilder(string templateString, params string[] singleCharset) : 
-        this(templateString, customCharsets: [singleCharset.ToList()])
+    public PwGeneratorBuilder(string templateString) 
+        : this(templateString, customCharsets: null) 
+    { }
+
+    public PwGeneratorBuilder(string templateString, params string[] singleCharset) 
+        : this(templateString, customCharsets: [singleCharset.ToList()])
     { }
 
     public PwGeneratorBuilder(string templateString, params List<string>[]? customCharsets)
@@ -40,7 +29,7 @@ public class PwGeneratorBuilder
 
 
     #region Config
-    public PwGeneratorBuilder Concat(Func<PwSequence, PwSequence> seqFunc)
+    public PwGeneratorBuilder Append(Func<PwSequence, PwSequence> seqFunc)
     {
         var seq = seqFunc(new PwSequence());
         _config.Concat.Add(seq);

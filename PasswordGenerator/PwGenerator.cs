@@ -1,9 +1,7 @@
 ﻿using System.Text;
-using PasswordCreator.Models;
-using PasswordCreator.StringTemplateParser;
 using PasswordGenerator.Models;
 
-namespace PasswordCreator;
+namespace PasswordGenerator;
 public class PwGenerator
 {
     private readonly PwConfig _config;
@@ -28,7 +26,7 @@ public class PwGenerator
         foreach (var e in _config.Fill)
         {
             if (e.MinLength < sb.Length) continue;
-            e.Sequence.SeqLength = e.MinLength - sb.Length;
+            e.Sequence.SetLength(e.MinLength - sb.Length);
             sb.Append(e.Sequence.GetPwSequence());
         }
 

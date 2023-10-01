@@ -1,4 +1,4 @@
-﻿using PasswordCreator.Models;
+﻿using PasswordGenerator.Models;
 
 namespace PasswordGenerator.StringTemplateParser.Models;
 

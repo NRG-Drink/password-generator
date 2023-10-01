@@ -1,4 +1,3 @@
-using PasswordCreator;
 using PasswordGenerator;
 using Xunit.Abstractions;
 

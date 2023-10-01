@@ -1,12 +1,18 @@
 ﻿using System.Text;
 
-namespace PasswordCreator.Models;
+namespace PasswordGenerator.Models;
 public class PwCharset
 {
-    public List<string> Charset { get; private set; } = new List<string>();
-    public int MinOccurrences { get; set; }
+    internal int MinOccurrences { get; set; }
+    internal List<string> Charset { get; private set; } = new List<string>();
 
     #region Config
+    public PwCharset SetMin(int minOccurrences)
+    {
+        MinOccurrences = minOccurrences;
+        return this;
+    }
+
     public PwCharset AddChars(params char[] chars)
     {
         Charset.AddRange(chars.Select(e => e.ToString()));
@@ -22,12 +28,6 @@ public class PwCharset
     public PwCharset AddCharset(params List<string>[] strings)
     {
         Charset.AddRange(strings.SelectMany(e => e));
-        return this;
-    }
-
-    public PwCharset SetMin(int minOccurrences)
-    {
-        MinOccurrences = minOccurrences;
         return this;
     }
     #endregion

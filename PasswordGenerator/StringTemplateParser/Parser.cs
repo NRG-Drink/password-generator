@@ -1,18 +1,16 @@
-﻿using PasswordCreator.Models;
-using PasswordGenerator.Models;
+﻿using PasswordGenerator.Models;
 using PasswordGenerator.StringTemplateParser.Models;
 using Sprache;
-using System.Runtime.InteropServices;
 
-namespace PasswordCreator.StringTemplateParser;
+namespace PasswordGenerator.StringTemplateParser;
 public class Parser
 {
     private readonly Parser<IEnumerable<Return>> _parser;
-    private readonly List<string>[]? _customCharsets;
+    private readonly PwCharsetParser _charsetParser;
 
     public Parser(List<string>[]? customCharsets = null)
     {
-        _customCharsets = customCharsets;
+        _charsetParser = new PwCharsetParser(customCharsets);
 
         var charsetP = GetCharsetParser();
         var countP = GetCountParser();
@@ -24,7 +22,7 @@ public class Parser
         _parser =
             from ret in Parse.Ref(() => concatP.Or(insertP).Or(untilP)).AtLeastOnce()
             from end in Parse.LineTerminator
-            select (ret);
+            select ret;
     }
 
     public PwConfig GetConfig(string templateString)
@@ -46,10 +44,8 @@ public class Parser
                 from end in Parse.Char(')')
                 select new PwFill()
                     .SetMinlength(ParseNumber(minLength))
-                    .SetSequence(e => e
-                        .SetLength(0)
-                        .AddCharsets(alphabets)
-                    )
+                    .SetLength(0)
+                    .AddCharsets(alphabets)
                 )
            select seq;
 
@@ -66,10 +62,8 @@ public class Parser
                 from end in Parse.Char(']')
                 select new PwInsert()
                     .SetPosition(ParseNumber(insertAt))
-                    .SetSequence(e => e
                         .SetLength(count.IsEmpty ? 1 : count.Get())
                         .AddCharsets(alphabets)
-                    )
                 )
            select seq;
 
@@ -85,7 +79,7 @@ public class Parser
                 select new PwSequence()
                     .SetLength(count.IsEmpty ? 1 : count.Get())
                     .AddCharsets(alphabets)
-            )
+                )
            select seq;
 
     private Parser<PwCharset> GetCharsetParser()
@@ -95,11 +89,13 @@ public class Parser
            from num in Parse.Digit.AtLeastOnce().Optional()
            select new PwCharset()
             .SetMin(ParseNumber(min))
-            .AddCharset(charset.Key is not null
-                    ? GetCharsetByKey(charset.Key, ParseNumber(num))
-                    : [charset.Chars ?? string.Empty]
-            )
+            .AddCharset(GetCharset(charset, num))
            ;
+
+    private List<string> GetCharset(Charset charset, IOption<IEnumerable<char>> num)
+        => charset.Key is not null
+            ? _charsetParser.GetCharsetByKey(charset.Key, ParseNumber(num))
+            : [charset.Chars ?? string.Empty];
 
     private Parser<Charset> GetKeyParser()
         => from key in Parse.Letter.Once().Text()
@@ -117,27 +113,27 @@ public class Parser
            select ParseNumber(value);
     #endregion
 
-    private List<string> GetCharsetByKey(string key, int num = 0)
-        => key switch
-        {
-            "s" => new List<string>() { "%", "/", "!", "?" },
-            "n" => Enumerable.Range(0, 9).Select(e => e.ToString()).ToList(),
-            "c" => Enumerable.Range(97, 26).Select(e => ((char)e).ToString()).ToList(),
-            "C" => Enumerable.Range(97, 26).Select(e => ((char)e).ToString().ToUpper()).ToList(),
-            "a" => GetCharsetByKey("s").Concat(GetCharsetByKey("n")).Concat(GetCharsetByKey("c")).Concat(GetCharsetByKey("C")).ToList(),
-            "x" => GetCustomCharset(num),
-            _ => throw new ArgumentException($"No default charset found for '{key}'.")
-        };
+    //private List<string> GetCharsetByKey(string key, int num = 0)
+    //    => key switch
+    //    {
+    //        "s" => new List<string>() { "%", "/", "!", "?" },
+    //        "n" => Enumerable.Range(0, 9).Select(e => e.ToString()).ToList(),
+    //        "c" => Enumerable.Range(97, 26).Select(e => ((char)e).ToString()).ToList(),
+    //        "C" => Enumerable.Range(97, 26).Select(e => ((char)e).ToString().ToUpper()).ToList(),
+    //        "a" => GetCharsetByKey("s").Concat(GetCharsetByKey("n")).Concat(GetCharsetByKey("c")).Concat(GetCharsetByKey("C")).ToList(),
+    //        "x" => GetCustomCharset(num),
+    //        _ => throw new ArgumentException($"No default charset found for '{key}'.")
+    //    };
 
-    private List<string> GetCustomCharset(int num)
-    {
-        if (_customCharsets is null) throw new ArgumentNullException($"No custom charset defined.");
-        if (_customCharsets.Length <= num) throw new IndexOutOfRangeException(
-                $"No custom charset with index {num} defined\n" +
-                $"Make sure start counting at 0, not 1."
-                );
-        return _customCharsets[num];
-    }
+    //private List<string> GetCustomCharset(int num)
+    //{
+    //    if (_customCharsets is null) throw new ArgumentNullException($"No custom charset defined.");
+    //    if (_customCharsets.Length <= num) throw new IndexOutOfRangeException(
+    //            $"No custom charset with index {num} defined\n" +
+    //            $"Make sure start counting at 0, not 1."
+    //            );
+    //    return _customCharsets[num];
+    //}
 
     private string? ParseString(IOption<IEnumerable<char>> num)
     {

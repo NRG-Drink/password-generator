@@ -1,6 +1,4 @@
-﻿using PasswordCreator.Models;
-
-namespace PasswordGenerator.Models;
+﻿namespace PasswordGenerator.Models;
 
 public record PwConfig(List<PwSequence> Concat, List<PwInsert> Insert, List<PwFill> Fill)
 {

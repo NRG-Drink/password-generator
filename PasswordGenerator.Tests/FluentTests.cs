@@ -1,4 +1,3 @@
-using PasswordCreator;
 using PasswordGenerator;
 using Xunit.Abstractions;
 
@@ -18,7 +17,7 @@ public class FluentTests
     public void Simple1()
     {
         var pwGenerator = new PwGeneratorBuilder()
-            .Concat(e => e
+            .Append(e => e
                 .SetLength(5)
                 .AddCharset(e => e
                     .AddChars('a')
@@ -31,7 +30,7 @@ public class FluentTests
                     .AddChars('b')
                 )
             )
-            .Concat(e => e
+            .Append(e => e
                 .SetLength(3)
                 .AddCharset(e => e
                     .AddChars('c')
@@ -49,34 +48,26 @@ public class FluentTests
     {
         var wordlist = new string[] { "Musicstudio", "Wonderwall", "Bananaphnoe", "Airplane", "Mustard" };
         var pwGen = new PwGeneratorBuilder()
-            .Concat(e => e
+            .Append(e => e
                 .SetLength(1)
-                .AddCharset(e => e
-                    .AddChars(wordlist)
-                )
+                .AddCharset(e => e.AddChars(wordlist))
             )
             .InsertAt(e => e
                 .SetPosition(0)
-                .SetSequence(e => e
-                    .SetLength(3)
-                    .AddCharset(e => e.AddChars('X', 'Y', 'Z'))
-                    .AddCharset(e => e.SetMin(1).AddChars('%'))
-                )
+                .SetLength(3)
+                .AddCharset(e => e.AddChars('X', 'Y', 'Z'))
+                .AddCharset(e => e.SetMin(1).AddChars('%'))
             )
             .InsertAt(e => e
                 .SetPosition(8)
-                .SetSequence(e => e
-                    .SetLength(4)
-                    .AddCharset(e => e.AddChars('1', '2', '3', '4'))
-                    .AddCharset(e => e.SetMin(2).AddChars('7', '8'))
-                )
+                .SetLength(4)
+                .AddCharset(e => e.AddChars('1', '2', '3', '4'))
+                .AddCharset(e => e.SetMin(2).AddChars('7', '8'))
             )
             .FillUntil(e => e
                 .SetMinlength(25)
-                .SetSequence(e => e
-                    .AddCharset(e => e.AddChars('%', '&', '#', '*', '@', '+'))
-                    .AddCharset(e => e.SetMin(3).AddChars('7', '8'))
-                )
+                .AddCharset(e => e.AddChars('%', '&', '#', '*', '@', '+'))
+                .AddCharset(e => e.SetMin(3).AddChars('7', '8'))
             )
             .Build()
             ;
