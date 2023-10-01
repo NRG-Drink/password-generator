@@ -5,7 +5,7 @@ namespace PasswordGenerator;
 
 public class PwGeneratorBuilder
 {
-    private PwConfig _config = new PwConfig(new List<PwSequence>(), new List<PwInsert>(), new List<PwFill>());
+    private PwConfig _config = new PwConfig();
 
     public PwGeneratorBuilder() 
     { }
@@ -29,6 +29,27 @@ public class PwGeneratorBuilder
 
 
     #region Config
+    public PwGeneratorBuilder TemplateString(
+        string templateString
+        )
+        => TemplateString(templateString, customCharsets: null);
+
+    public PwGeneratorBuilder TemplateString(
+        string templateString,
+        params string[] singleCharset
+        )
+        => TemplateString(templateString, customCharsets: [singleCharset.ToList()]);
+
+    public PwGeneratorBuilder TemplateString(
+        string templateString,
+        params List<string>[]? customCharsets
+        )
+    {
+        var parser = new Parser(customCharsets);
+        _config.Add(parser.GetConfig(templateString));
+        return this;
+    }
+
     public PwGeneratorBuilder Append(Func<PwSequence, PwSequence> seqFunc)
     {
         var seq = seqFunc(new PwSequence());
