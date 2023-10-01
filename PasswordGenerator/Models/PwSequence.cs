@@ -15,6 +15,12 @@ public class PwSequence
         return this;
     }
 
+    public PwSequence AddCharsets(IEnumerable<PwCharset> charsets)
+    {
+        Values.AddRange(charsets);
+        return this;
+    }
+
     public PwSequence SetLength(int length)
     {
         SeqLength = length;

@@ -1,4 +1,5 @@
 using PasswordCreator;
+using PasswordGenerator;
 using Xunit.Abstractions;
 
 namespace TestProject1;
@@ -16,7 +17,7 @@ public class FluentTests
     [Fact]
     public void Simple1()
     {
-        var pwGenerator = new PwGenerator()
+        var pwGenerator = new PwGeneratorBuilder()
             .Concat(e => e
                 .SetLength(5)
                 .AddCharset(e => e
@@ -36,6 +37,7 @@ public class FluentTests
                     .AddChars('c')
                 )
             )
+            .Build()
             ;
 
         var pw = pwGenerator.GeneratePassword();
@@ -46,7 +48,7 @@ public class FluentTests
     public void Example1()
     {
         var wordlist = new string[] { "Musicstudio", "Wonderwall", "Bananaphnoe", "Airplane", "Mustard" };
-        var pwGen = new PwGenerator()
+        var pwGen = new PwGeneratorBuilder()
             .Concat(e => e
                 .SetLength(1)
                 .AddCharset(e => e
@@ -76,6 +78,7 @@ public class FluentTests
                     .AddCharset(e => e.SetMin(3).AddChars('7', '8'))
                 )
             )
+            .Build()
             ;
 
         for (int i = 0; i < 5; i++)

@@ -1,9 +1,9 @@
 ﻿using System.Text;
 
 namespace PasswordCreator.Models;
-public record PwCharset
+public class PwCharset
 {
-    public List<string> Charset { get; set; } = new List<string>();
+    public List<string> Charset { get; private set; } = new List<string>();
     public int MinOccurrences { get; set; }
 
     #region Config
@@ -16,6 +16,12 @@ public record PwCharset
     public PwCharset AddChars(params string[] strings)
     {
         Charset.AddRange(strings);
+        return this;
+    }
+
+    public PwCharset AddCharset(params List<string>[] strings)
+    {
+        Charset.AddRange(strings.SelectMany(e => e));
         return this;
     }
 
