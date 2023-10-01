@@ -2,28 +2,30 @@
 
 namespace PasswordGenerator.Models;
 
-public class PwCharsetParser
+public class PwCharsetFactory
 {
-    private readonly List<string>[]? _customCharsets;
+    private readonly ICharsetCollection _alphabet;
+    private readonly Charset[]? _customCharsets;
 
-    public PwCharsetParser(List<string>[]? customCharsets)
+    public PwCharsetFactory(ICharsetCollection alphabet, Charset[]? customCharsets)
     {
+        _alphabet = alphabet;
         _customCharsets = customCharsets;
     }
 
-    public List<string> GetCharsetByKey(string key, int num = 0)
+    public Charset GetCharsetByKey(string key, int num = 0)
     => key switch
     {
-        "s" or "S" => PwAlphabet.SpecialChars,
-        "n" or "N" => PwAlphabet.Numbers,
-        "c" => PwAlphabet.LatinLettersL,
-        "C" => PwAlphabet.LatinLettersU,
-        "a" or "A" => PwAlphabet.All,
+        "c" => _alphabet.LowerLatinLetters,
+        "C" => _alphabet.UpperLatinLetters,
+        "n" or "N" => _alphabet.Numbers,
+        "s" or "S" => _alphabet.SpecialChars,
+        "a" or "A" => _alphabet.AllAlphabets,
         "x" or "X" => GetCustomCharset(num),
         _ => throw new ArgumentException($"No default charset found for '{key}'.")
     };
 
-    private List<string> GetCustomCharset(int num)
+    private Charset GetCustomCharset(int num)
     {
         if (_customCharsets is null) throw new ArgumentNullException($"No custom charset defined.");
         if (_customCharsets.Length <= num) 

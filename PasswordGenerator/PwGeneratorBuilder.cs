@@ -15,10 +15,10 @@ public class PwGeneratorBuilder
     { }
 
     public PwGeneratorBuilder(string templateString, params string[] singleCharset) 
-        : this(templateString, customCharsets: [singleCharset.ToList()])
+        : this(templateString, customCharsets: [singleCharset.ToCharset()])
     { }
 
-    public PwGeneratorBuilder(string templateString, params List<string>[]? customCharsets)
+    public PwGeneratorBuilder(string templateString, params Charset[]? customCharsets)
     {
         var parser = new Parser(customCharsets);
         _config.Add(parser.GetConfig(templateString));
@@ -38,11 +38,11 @@ public class PwGeneratorBuilder
         string templateString,
         params string[] singleCharset
         )
-        => TemplateString(templateString, customCharsets: [singleCharset.ToList()]);
+        => TemplateString(templateString, customCharsets: [singleCharset.ToCharset()]);
 
     public PwGeneratorBuilder TemplateString(
         string templateString,
-        params List<string>[]? customCharsets
+        params Charset[]? customCharsets
         )
     {
         var parser = new Parser(customCharsets);

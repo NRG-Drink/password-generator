@@ -1,4 +1,5 @@
 using PasswordGenerator;
+using PasswordGenerator.Models;
 using Xunit.Abstractions;
 
 namespace TestProject1;
@@ -53,7 +54,7 @@ public class TemplateStringTests
     [Fact]
     public void CustomCharset3()
     {
-        var wordlist = new List<string> { "Programming" };
+        var wordlist = new Charset { "Programming" };
         var pwGen = new PwGeneratorBuilder("(x)(1a6s,7)(a,3)(c,3)[4,s,3]f(n,30)", wordlist).Build();
 
         for (int i = 0; i < 5; i++)
@@ -68,8 +69,8 @@ public class TemplateStringTests
     [Fact]
     public void CustomCharset4()
     {
-        var wordlist1 = new List<string> { "Programming" };
-        var wordlist2 = new List<string> { "Coding" };
+        var wordlist1 = new Charset { "Programming" };
+        var wordlist2 = new Charset { "Coding" };
         var pwGen = new PwGeneratorBuilder("(x^0)(x^2)(x^1)(1a6s,7)(a,3)(s,3)[2,s,3]f(n,40)", wordlist1, wordlist2, ["and"]).Build();
 
         for (int i = 0; i < 5; i++)
@@ -99,9 +100,9 @@ public class TemplateStringTests
     [Fact]
     public void Readme2()
     {
-        var wordlist1 = new List<string> { "Password", "Generator" };
-        var wordlist2 = new List<string> { " is ", "s are " };
-        var wordlist3 = new List<string> { "fantastic", "great", "awesome" };
+        var wordlist1 = new Charset { "Password", "Generator" };
+        var wordlist2 = new Charset { " is ", "s are " };
+        var wordlist3 = new Charset { "fantastic", "great", "awesome" };
         var pwGen = new PwGeneratorBuilder("(x)(x^1)(x^2)f('!',25)", wordlist1, wordlist2, wordlist3).Build();
 
         for (int i = 0; i < 5; i++)

@@ -11,12 +11,6 @@ public class PwInsert
         return this;
     }
 
-    //public PwInsert SetSequence(Func<PwSequence, PwSequence> seqFunc)
-    //{
-    //    Sequence = seqFunc(new PwSequence());
-    //    return this;
-    //}
-
     public PwInsert AddCharset(Func<PwCharset, PwCharset> charsetFunc)
     {
         Sequence.AddCharset(charsetFunc);

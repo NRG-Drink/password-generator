@@ -1,3 +1,3 @@
 ﻿namespace PasswordGenerator.StringTemplateParser.Models;
 
-public record Charset(string? Key, string? Chars);
+public record ParsedCharset(string? Key, string? Element);

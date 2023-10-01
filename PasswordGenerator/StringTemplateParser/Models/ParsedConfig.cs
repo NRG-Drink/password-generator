@@ -2,5 +2,5 @@
 
 namespace PasswordGenerator.StringTemplateParser.Models;
 
-public record Return(PwSequence? Concat, PwInsert? Insert, PwFill? Fill);
+public record ParsedConfig(PwSequence? Concat, PwInsert? Insert, PwFill? Fill);
 
