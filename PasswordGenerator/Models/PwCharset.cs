@@ -2,7 +2,7 @@
 public class PwCharset
 {
     internal int MinOccurrences { get; set; }
-    internal Charset Charset { get; private set; } = new ();
+    internal Charset Charset { get; } = new ();
 
     #region Config
     public PwCharset SetMin(int minOccurrences)

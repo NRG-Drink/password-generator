@@ -2,7 +2,7 @@
 public class PwFill
 {
     public int MinLength { get; private set; }
-    public PwSequence Sequence { get; private set; } = new PwSequence();
+    public PwSequence Sequence { get; } = new PwSequence();
 
     #region Config
     public PwFill SetMinlength(int position)

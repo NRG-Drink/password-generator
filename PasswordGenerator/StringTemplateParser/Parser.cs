@@ -79,8 +79,8 @@ public class Parser
                 from end in Parse.Char(']')
                 select new PwInsert()
                     .SetPosition(ParseNumber(insertAt))
-                        .SetLength(count.IsEmpty ? 1 : count.Get())
-                        .AddCharsets(alphabets)
+                    .SetLength(count.IsEmpty ? 1 : count.Get())
+                    .AddCharsets(alphabets)
                 )
            select seq;
 
@@ -105,14 +105,14 @@ public class Parser
            from roof in Parse.Char('^').Optional()
            from num in Parse.Digit.AtLeastOnce().Optional()
            select new PwCharset()
-            .SetMin(ParseNumber(min))
-            .AddCharset(GetCharset(charset, num))
+				.SetMin(ParseNumber(min))
+				.AddCharset(GetCharset(charset, num))
            ;
 
     private Charset GetCharset(ParsedCharset charset, IOption<IEnumerable<char>> num)
         => charset.Key is not null
             ? _charsetFactory.GetCharsetByKey(charset.Key, ParseNumber(num))
-            : [charset.Element ?? string.Empty];
+            : [charset.Element!];
 
     private Parser<ParsedCharset> GetKeyParser()
         => from key in Parse.Letter.Once().Text()
@@ -138,7 +138,7 @@ public class Parser
 
     private int ParseNumber(IEnumerable<char> num)
     {
-        var val = new string(num.ToArray()) ?? "0";
+        var val = new string(num.ToArray());
         var number = int.Parse(val);
         return number;
     }

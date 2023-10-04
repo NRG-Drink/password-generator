@@ -3,7 +3,7 @@ using PasswordGenerator.Models;
 using Xunit.Abstractions;
 
 namespace TestProject1;
-[Trait("Template", "")]
+[Trait("Template", "Unit")]
 public class TemplateStringTests
 {
     private readonly ITestOutputHelper _output;
@@ -17,7 +17,10 @@ public class TemplateStringTests
     [Fact]
     public void Simple1()
     {
-        var pwGenerator = new PwGeneratorBuilder("('a',5)('c',3)[5,'b',4]").Build();
+        var pwGenerator = new PwGeneratorBuilder(
+			"('a',5)('c',3)[5,'b',4]"
+			)
+			.Build();
 
         var pw = pwGenerator.GeneratePassword();
         Assert.Equal("aaaaabbbbccc", pw);
@@ -26,7 +29,10 @@ public class TemplateStringTests
     [Fact]
     public void CustomCharset1()
     {
-        var pwGen = new PwGeneratorBuilder("('Programming')(1a6s,7)(a,3)(c,3)[4,s,3]f(n,30)").Build();
+        var pwGen = new PwGeneratorBuilder(
+			"('Programming')(1a6s,7)(a,3)(c,3)[4,s,3]f(n,30)"
+			)
+			.Build();
 
         for (int i = 0; i < 5; i++)
         {
@@ -40,7 +46,11 @@ public class TemplateStringTests
     [Fact]
     public void CustomCharset2()
     {
-        var pwGen = new PwGeneratorBuilder("(x)(1a6s,7)(a,3)(c,3)[4,s,3]f(n,30)", "Programming").Build();
+        var pwGen = new PwGeneratorBuilder(
+			"(x)(1a6s,7)(a,3)(c,3)[4,s,3]f(n,30)", 
+			"Programming"
+			)
+			.Build();
 
         for (int i = 0; i < 5; i++)
         {
@@ -55,7 +65,11 @@ public class TemplateStringTests
     public void CustomCharset3()
     {
         var wordlist = new Charset { "Programming" };
-        var pwGen = new PwGeneratorBuilder("(x)(1a6s,7)(a,3)(c,3)[4,s,3]f(n,30)", wordlist).Build();
+        var pwGen = new PwGeneratorBuilder(
+			"(x)(1a6s,7)(a,3)(c,3)[4,s,3]f(n,30)", 
+			wordlist
+			)
+			.Build();
 
         for (int i = 0; i < 5; i++)
         {
@@ -71,7 +85,12 @@ public class TemplateStringTests
     {
         var wordlist1 = new Charset { "Programming" };
         var wordlist2 = new Charset { "Coding" };
-        var pwGen = new PwGeneratorBuilder("(x^0)(x^2)(x^1)(1a6s,7)(a,3)(s,3)[2,s,3]f(n,40)", wordlist1, wordlist2, ["and"]).Build();
+        var pwGen = new PwGeneratorBuilder(
+			"(x^0)(x^2)(x^1)(1a6s,7)(C,3)(s,3)[2,s,3]f(n,40)", 
+			wordlist1, wordlist2, ["and"]
+			)
+			.Build()
+			;
 
         for (int i = 0; i < 5; i++)
         {
@@ -84,7 +103,32 @@ public class TemplateStringTests
         }
     }
 
-    [Fact]
+	[Fact]
+	public void NotDefinedCustomCharsetEx1()
+	{
+		Assert.Throws<ArgumentNullException>(() => 
+			new PwGeneratorBuilder("(x)")
+			);
+	}
+
+	[Fact]
+	public void NotDefinedCustomCharsetEx2()
+	{
+		Assert.Throws<IndexOutOfRangeException>(() => 
+			new PwGeneratorBuilder("(x)(x^1)", new string[] { "hello" })
+		);
+	}
+
+	[Fact]
+	public void NotDefinedDefaultCharsetEx2()
+	{
+		Assert.Throws<ArgumentException>(() =>
+			new PwGeneratorBuilder("(g)")
+		);
+	}
+
+
+	[Fact]
     public void Readme1()
     {
         var pwGen = new PwGeneratorBuilder("(c)(2sn,4)[4,a,3]f(n,10)").Build();

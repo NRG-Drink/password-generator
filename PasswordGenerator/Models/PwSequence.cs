@@ -4,7 +4,7 @@ namespace PasswordGenerator.Models;
 public class PwSequence
 {
     internal int SequenceLength { get; private set; } = 0;
-    internal List<PwCharset> Values { get; private set; } = new();
+    internal List<PwCharset> Values { get; } = new();
 
     #region Config
     public PwSequence SetLength(int length)

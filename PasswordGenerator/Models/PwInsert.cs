@@ -2,7 +2,7 @@
 public class PwInsert
 {
     internal int Position { get; private set; }
-    internal PwSequence Sequence { get; private set; } = new PwSequence();
+    internal PwSequence Sequence { get; } = new PwSequence();
 
     #region Config
     public PwInsert SetPosition(int position)
